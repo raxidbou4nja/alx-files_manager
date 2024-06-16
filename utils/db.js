@@ -28,6 +28,6 @@ class DBClient {
   }
 }
 
-dbClient = new DBClient();
+const dbClient = new DBClient();
 
 export default dbClient;
