@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-class dbClient {
+class DBClient {
     constructor() {
         const host = process.env.DB_HOST || 'localhost';
         const port = process.env.DB_PORT || 27017;
@@ -28,5 +28,7 @@ class dbClient {
         return this.client.db(this.dbName).collection('files').countDocuments();
     }
 }
+
+dbClient = new DBClient();
 
 export default dbClient;
