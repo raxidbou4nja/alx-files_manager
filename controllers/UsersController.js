@@ -37,7 +37,7 @@ const UsersController = {
         }
     
         const tokenKey = `auth_${token}`;
-        const userId = await redisClient.getAsync(tokenKey);
+        const userId = await redisClient.get(tokenKey);
         if (!userId) {
           return res.status(401).json({ error: 'Unauthorized' });
         }
