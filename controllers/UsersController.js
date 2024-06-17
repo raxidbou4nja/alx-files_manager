@@ -1,7 +1,7 @@
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-
+import { ObjectID } from 'mongodb';
 
 const UsersController = {
     async postNew(req, res) {
@@ -35,19 +35,23 @@ const UsersController = {
         if (!token) {
           return res.status(401).json({ error: 'Unauthorized' });
         }
-    
+        
         const tokenKey = `auth_${token}`;
         const userId = await redisClient.get(tokenKey);
+        const userObjId = new ObjectID(userId);
+
         if (!userId) {
           return res.status(401).json({ error: 'Unauthorized' });
         }
-    
-        const user = await dbClient.db.collection('users').findOne({ _id: new dbClient.ObjectId(userId) });
+
+        const usersCollection = dbClient.client.db(dbClient.dbName).collection('users');
+        const user = await usersCollection.findOne({ _id: userObjId });
+
         if (!user) {
           return res.status(401).json({ error: 'Unauthorized' });
         }
-    
-        res.status(200).json({ id: user._id, email: user.email });
+
+        return res.status(200).json({ id: user._id, email: user.email });
     },
 };
 
