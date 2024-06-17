@@ -5,7 +5,7 @@ import sha1 from 'sha1';
 
 const AuthController = {
   async getConnect(req, res) {
-    console.log(req);
+    console.log("hello toke: ", req);
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Basic ')) {
       return res.status(401).json({ error: 'Unauthorized' });
