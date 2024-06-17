@@ -1,7 +1,7 @@
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-
+import { v4 as uuidv4 } from 'uuid';
 
 const AuthController = {
     async getConnect(req, res) {
@@ -25,12 +25,11 @@ const AuthController = {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const token = sha1(Date.now() + Math.random());
+        const token = uuidv4();
         const tokenKey = `auth_${token}`;
         await redisClient.set(tokenKey, user._id.toString(), 86400);
 
         return res.status(200).json({ token });
-
     },
 
     async getDisconnect(req, res) {
