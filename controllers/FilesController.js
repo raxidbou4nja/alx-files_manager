@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import mime from 'mime-types';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import { ObjectID } from 'mongodb';
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
@@ -17,7 +18,7 @@ const FilesController = {
     }
 
     const tokenKey = `auth_${token}`;
-    const userId = await redisClient.getAsync(tokenKey);
+    const userId = await redisClient.get(tokenKey);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -48,12 +49,15 @@ const FilesController = {
       }
     }
 
+    const userObjId = new ObjectID(userId);
+    const parentObjId = new ObjectID(parentId);
+
     const newFile = {
-      userId: new dbClient.ObjectId(userId),
+      userId: userObjId,
       name,
       type,
       isPublic,
-      parentId: parentId === 0 ? 0 : new dbClient.ObjectId(parentId),
+      parentId: parentId === 0 ? 0 : parentObjId,
     };
 
     if (type === 'folder') {
