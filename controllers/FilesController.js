@@ -124,6 +124,41 @@ async function getShow(req, res) {
   }
 }
 
+
+async function getIndex(req, res) {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const tokenKey = `auth_${token}`;
+  const userId = await redisClient.get(tokenKey);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const parentId = req.query.parentId || '0';
+  const page = parseInt(req.query.page, 10) || 0;
+  const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
+  const userObjId = new ObjectID(userId);
+  const parentObjId = new ObjectID(parentId);
+
+  try {
+    const pipeline = [
+      { $match: { userId: userObjId, parentId: parentObjId } },
+      { $sort: { name: 1 } }, // Example sorting by name
+      { $skip: page * 20 },
+      { $limit: 20 }
+    ];
+
+    const files = await filesCollection.aggregate(pipeline).toArray();
+    return res.json(files);
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 const FilesController = {
   postUpload,
   getShow,
