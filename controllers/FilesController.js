@@ -10,8 +10,7 @@ const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
 const existsAsync = promisify(fs.exists);
 
-const FilesController = {
-  async postUpload(req, res) {
+async function postUpload(req, res) {
     const token = req.headers['x-token'];
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -91,7 +90,44 @@ const FilesController = {
         parentId,
       });
     }
-  },
+  }
+
+
+
+async function getShow(req, res) {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const tokenKey = `auth_${token}`;
+  const userId = await redisClient.get(tokenKey);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const fileId = req.params.id;
+  const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
+  const userObjId = new ObjectID(userId);
+
+  try {
+    const file = await filesCollection.findOne({ _id: new ObjectID(fileId), userId: userObjId });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.json(file);
+  } catch (error) {
+    console.error('Error fetching file:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+const FilesController = {
+  postUpload,
+  getShow,
+  getIndex,
 };
 
 export default FilesController;
