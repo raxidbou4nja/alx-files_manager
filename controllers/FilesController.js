@@ -139,11 +139,10 @@ async function getIndex(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const parentId = req.query.parentId || '0';
     const page = parseInt(req.query.page, 10) || 0;
     const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
     const userObjId = new ObjectID(userId);
-    const parentObjId = new ObjectID(parentId);
+    const parentObjId = req.query.parentId ? new ObjectID(req.query.parentId) : 0;
 
     const pipeline = [
       { $match: { userId: userObjId, parentId: parentObjId } },
