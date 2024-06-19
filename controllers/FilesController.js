@@ -108,12 +108,12 @@ async function getShow(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const fileId = req.params.id;
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
+  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
   try {
-    const file = await filesCollection.findOne({ _id: new ObjectID(fileId), userId: userObjId });
+    const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
 
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
@@ -142,7 +142,7 @@ async function getIndex(req, res) {
 
     const page = parseInt(req.query.page, 10) || 0;
     const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
-    const userObjId = new ObjectID(userId);
+    const userObjId = userId ? new ObjectID(userId) : 0;
     const parentObjId = req.query.parentId ? new ObjectID(req.query.parentId) : 0;
 
     const pipeline = [
@@ -172,13 +172,13 @@ async function putPublish(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const fileId = req.params.id;
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
+  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
   try {
     const file = await filesCollection.findOneAndUpdate(
-      { _id: new ObjectID(fileId), userId: userObjId },
+      { _id: fileObjId, userId: userObjId },
       { $set: { isPublic: true } },
       { returnOriginal: false }
     );
@@ -207,13 +207,13 @@ async function putUnpublish(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const fileId = req.params.id;
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
+  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
   try {
     const file = await filesCollection.findOneAndUpdate(
-      { _id: new ObjectID(fileId), userId: userObjId },
+      { _id: fileObjId, userId: userObjId },
       { $set: { isPublic: false } },
       { returnOriginal: false }
     );
@@ -231,14 +231,13 @@ async function putUnpublish(req, res) {
 
 async function getFile(req, res) {
   const token = req.headers['x-token'];
-  const fileId = req.params.id;
 
   const tokenKey = `auth_${token}`;
   const userId = await redisClient.get(tokenKey);
   
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
-  const fileObjId = new ObjectID(fileId);
+  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
   try {
     const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
