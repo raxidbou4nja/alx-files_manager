@@ -244,9 +244,10 @@ async function getFile(req, res) {
 
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
+  const fileObjId = new ObjectID(fileId);
 
   try {
-    const file = await filesCollection.findOne({ _id: new ObjectID(fileId), userId: userObjId });
+    const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
 
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
