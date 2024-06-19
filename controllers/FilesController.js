@@ -5,7 +5,7 @@ import mime from 'mime-types';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 import { ObjectID } from 'mongodb';
-
+import path from 'path';
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
@@ -246,6 +246,7 @@ async function getFile(req, res) {
   const userObjId = new ObjectID(userId);
   const fileObjId = new ObjectID(fileId);
 
+  try {
     const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
 
     if (!file) {
@@ -270,7 +271,10 @@ async function getFile(req, res) {
 
     res.setHeader('Content-Type', mimeType);
     res.send(fileContent);
-
+  } catch (error) {
+    console.error('Error fetching file data:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 const FilesController = {
