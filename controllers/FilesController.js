@@ -6,10 +6,13 @@ import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 import { ObjectID } from 'mongodb';
 import path from 'path';
+import Queue from 'bull';
 
 const writeFileAsync = promisify(fs.writeFile);
 const mkdirAsync = promisify(fs.mkdir);
 const existsAsync = promisify(fs.exists);
+
+const fileQueue = new Queue('fileQueue');
 
 async function postUpload(req, res) {
     const token = req.headers['x-token'];
@@ -83,6 +86,12 @@ async function postUpload(req, res) {
       newFile.localPath = localPath;
 
       const result = await filesCollection.insertOne(newFile);
+      
+      // Add job to queue if the file is an image
+      if (type === 'image') {
+        fileQueue.add({ userId, fileId: result.insertedId });
+      }
+
       return res.status(201).json({
         id: result.insertedId,
         userId,
@@ -92,7 +101,7 @@ async function postUpload(req, res) {
         parentId,
       });
     }
-  }
+}
 
 
 
@@ -237,43 +246,56 @@ async function putUnpublish(req, res) {
 }
 
 async function getFile(req, res) {
-  const token = req.headers['x-token'];
+    const token = req.headers['x-token'];
 
-  const tokenKey = `auth_${token}`;
-  const userId = await redisClient.get(tokenKey);
-  
-  const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
-  const userObjId = new ObjectID(userId);
-  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
+    const tokenKey = `auth_${token}`;
+    const userId = await redisClient.get(tokenKey);
+    
+    const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
+    const userObjId = new ObjectID(userId);
+    const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
-  try {
-    const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
+    try {
+      const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
 
-    if (!file) {
-      return res.status(404).json({ error: 'Not found' });
-    }
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
 
-    if (!file.isPublic && file.userId.toString() !== userId) {
-      return res.status(404).json({ error: 'Not found' });
-    }
+      if (!file.isPublic && file.userId.toString() !== userId) {
+        return res.status(404).json({ error: 'Not found' });
+      }
 
-    if (file.type === 'folder') {
-      return res.status(400).json({ error: 'A folder doesn\'t have content' });
-    }
+      if (file.type === 'folder') {
+        return res.status(400).json({ error: 'A folder doesn\'t have content' });
+      }
 
-    if (!file.localPath) {
-      return res.status(404).json({ error: 'Not found' });
-    }
+      if (!file.localPath) {
+        return res.status(404).json({ error: 'Not found' });
+      }
 
-    const fileContent = fs.readFileSync(file.localPath);
+      let filePath = file.localPath;
+      const size = req.query.size;
 
-    const mimeType = mime.contentType(path.extname(file.name));
+      if (size) {
+        if (![100, 250, 500].includes(parseInt(size, 10))) {
+          return res.status(400).json({ error: 'Invalid size' });
+        }
+        filePath = `${file.localPath}_${size}`;
+      }
 
-    res.setHeader('Content-Type', mimeType);
-    res.send(fileContent);
-  } catch (error) {
-    console.error('Error fetching file data:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+
+      const fileContent = fs.readFileSync(filePath);
+      const mimeType = mime.contentType(path.extname(file.name));
+
+      res.setHeader('Content-Type', mimeType);
+      res.send(fileContent);
+    } catch (error) {
+      console.error('Error fetching file data:', error);
+      return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
