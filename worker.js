@@ -39,7 +39,7 @@ fileQueue.process(async (job, done) => {
       { width: 100 },
     ];
 
-    for (const option of options) {
+    for await (const option of options) {
       const thumbnail = await imageThumbnail(localPath, option);
       const thumbnailPath = `${localPath}_${option.width}`;
       fs.writeFileSync(thumbnailPath, thumbnail);
@@ -49,6 +49,7 @@ fileQueue.process(async (job, done) => {
   } catch (error) {
     done(error);
   }
+  return null; // Add a return statement at the end of the async arrow function
 });
 
 fileQueue.on('failed', (job, err) => {

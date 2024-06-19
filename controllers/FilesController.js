@@ -43,10 +43,10 @@ async function postUpload(req, res) {
     const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
 
     const userObjId = new ObjectID(userId);
-    const parentObjId = parentId != 0 ? new ObjectID(parentId) : 0;
+    const parentObjId = parentId ? new ObjectID(parentId) : 0;
 
 
-    if (parentId != 0) {
+    if (parentId) {
       const parentFile = await filesCollection.findOne({ _id: parentObjId });
       if (!parentFile) {
         return res.status(400).json({ error: 'Parent not found' });
@@ -61,7 +61,7 @@ async function postUpload(req, res) {
       name,
       type,
       isPublic,
-      parentId: parentId == 0 ? 0 : parentObjId,
+      parentId: parentId ? parentObjId : 0,
     };
 
     if (type === 'folder') {

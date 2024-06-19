@@ -1,4 +1,7 @@
-import dbClient from '../../utils/db';
+import dbClient from '../utils/db';
+import { expect } from 'chai';
+import { describe, it, before } from 'mocha';
+
 
 describe('+ DBClient utility', () => {
   before(function (done) {

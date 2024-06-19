@@ -1,5 +1,7 @@
 import { expect } from 'chai';
-import redisClient from '../../utils/redis';
+import redisClient from '../utils/redis';
+import { expect } from 'chai';
+import { describe, it, before } from 'mocha';
 
 describe('+ RedisClient utility', () => {
   before(function (done) {
