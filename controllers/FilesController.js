@@ -232,16 +232,9 @@ async function getFile(req, res) {
   const token = req.headers['x-token'];
   const fileId = req.params.id;
 
-  if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
   const tokenKey = `auth_${token}`;
   const userId = await redisClient.get(tokenKey);
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
+  
   const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
   const userObjId = new ObjectID(userId);
   const fileObjId = new ObjectID(fileId);
