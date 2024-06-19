@@ -153,7 +153,14 @@ async function getIndex(req, res) {
     ];
 
     const files = await filesCollection.aggregate(pipeline).toArray();
-    return res.json(files);
+    return res.json(files.map(({ id, userId, name, type, isPublic, parentId }) => ({
+      id,
+      userId,
+      name,
+      type,
+      isPublic,
+      parentId,
+    })));
   } catch (error) {
     console.error('Error fetching files:', error);
     return res.status(500).json({ error: 'Internal server error' });
