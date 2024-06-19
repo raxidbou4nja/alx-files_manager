@@ -40,7 +40,7 @@ async function postUpload(req, res) {
     const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
 
     const userObjId = new ObjectID(userId);
-    const parentObjId = new ObjectID(parentId);
+    const parentObjId = parentId !== 0 ? new ObjectID(parentId) : null;
 
     if (parentId !== 0) {
       const parentFile = await filesCollection.findOne({ _id: parentObjId });
