@@ -246,58 +246,59 @@ async function putUnpublish(req, res) {
 }
 
 async function getFile(req, res) {
-    const token = req.headers['x-token'];
+  const token = req.headers['x-token'];
 
-    const tokenKey = `auth_${token}`;
-    const userId = await redisClient.get(tokenKey);
-    
-    const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
-    const userObjId = new ObjectID(userId);
-    const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
+  const tokenKey = `auth_${token}`;
+  const userId = await redisClient.get(tokenKey);
+  
+  const filesCollection = dbClient.client.db(dbClient.dbName).collection('files');
+  const userObjId = new ObjectID(userId);
+  const fileObjId = req.params.id ? new ObjectID(req.params.id) : 0;
 
-    try {
-      const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
+  try {
+    const file = await filesCollection.findOne({ _id: fileObjId, userId: userObjId });
 
-      if (!file) {
-        return res.status(404).json({ error: 'Not found' });
-      }
+    if (!file) {
+    return res.status(404).json({ error: 'Not found' });
+    }
 
-      if (!file.isPublic && file.userId.toString() !== userId) {
-        return res.status(404).json({ error: 'Not found' });
-      }
+    if (!file.isPublic && file.userId.toString() !== userId) {
+    return res.status(404).json({ error: 'Not found' });
+    }
 
-      if (file.type === 'folder') {
-        return res.status(400).json({ error: 'A folder doesn\'t have content' });
-      }
+    if (file.type === 'folder') {
+    return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
 
-      if (!file.localPath) {
-        return res.status(404).json({ error: 'Not found' });
-      }
+    if (!file.localPath) {
+    return res.status(404).json({ error: 'Not found' });
+    }
 
-      let filePath = file.localPath;
-      const size = req.query.size;
+    let filePath = file.localPath;
+    const size = req.query.size;
 
-      if (size) {
-        if (![100, 250, 500].includes(parseInt(size, 10))) {
-          return res.status(400).json({ error: 'Invalid size' });
-        }
-        filePath = `${file.localPath}_${size}`;
-      }
+    if (size) {
+    if (![100, 250, 500].includes(parseInt(size, 10))) {
+      return res.status(400).json({ error: 'Invalid size' });
+    }
+    filePath = `${file.localPath}_${size}`;
+    }
 
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'Not found' });
-      }
+    if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Not found' });
+    }
 
-      const fileContent = fs.readFileSync(filePath);
-      const mimeType = mime.contentType(path.extname(file.name));
+    const fileContent = fs.readFileSync(filePath);
+    const mimeType = mime.contentType(path.extname(file.name));
 
-      res.setHeader('Content-Type', mimeType);
-      res.send(fileContent);
-    } catch (error) {
-      console.error('Error fetching file data:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+    res.setHeader('Content-Type', mimeType);
+    return res.send(fileContent);
+  } catch (error) {
+    console.error('Error fetching file data:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
 
 const FilesController = {
   postUpload,
