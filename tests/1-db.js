@@ -1,7 +1,6 @@
-import dbClient from '../utils/db';
 import { expect } from 'chai';
 import { describe, it, before } from 'mocha';
-
+import dbClient from '../utils/db';
 
 describe('+ DBClient utility', () => {
   before(function (done) {
@@ -14,7 +13,7 @@ describe('+ DBClient utility', () => {
       }).catch((connectErr) => done(connectErr));
   });
 
-  it('Client is alive', () => {
+  it('client is alive', () => {
     expect(dbClient.isAlive()).to.equal(true);
   });
 

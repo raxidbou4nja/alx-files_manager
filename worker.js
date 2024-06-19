@@ -1,8 +1,8 @@
 import Queue from 'bull';
-import dbClient from './utils/db';
 import imageThumbnail from 'image-thumbnail';
 import fs from 'fs';
 import { ObjectID } from 'mongodb';
+import dbClient from './utils/db';
 
 const fileQueue = new Queue('fileQueue');
 
@@ -27,7 +27,7 @@ fileQueue.process(async (job, done) => {
     return done(new Error('File not found'));
   }
 
-  const localPath = file.localPath;
+  const { localPath } = file;
   if (!localPath) {
     return done(new Error('Local path not found'));
   }
